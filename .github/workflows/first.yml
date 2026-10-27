@@ -1,5 +1,9 @@
 name: "first workflow"
-on: push
+on: 
+  push:
+  pull_request:
+    branches: 
+      - master
 jobs: 
     first-job:
       runs-on: ubuntu-latest
@@ -13,5 +17,31 @@ jobs:
         - name: install dependency
           run: npm ci
 
+        - name: run ESLint in app
+          run: npm run lint
+
+        #- name: "run test cases"
+        #  run: npm run test
+
         - name: make react build
           run: npm run build
+
+        - name: create artifacts
+          uses: actions/upload-artifact@v4
+          with: 
+            name: react-build
+            path: dist/
+            retention-days: 7
+
+    deploy-job:
+      needs: [first-job]
+      runs-on: ubuntu-latest
+      steps:
+        - name: checkout
+          uses: actions/checkout@v4
+
+        - name: "install vercel cli"
+          run: npm install --global vercel
+
+        - name: deployement on vercel
+          run: vercel --prod --yes --token="${{secrets.VERCEL_TOKEN}}"
